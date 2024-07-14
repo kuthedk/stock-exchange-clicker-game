@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema({
     revenuePerTrade: { type: Number, default: 1 },
     prestigeMultiplier: { type: Number, default: 1 },
     lastLoggedIn: { type: Date, default: Date.now },
+    upgradeCosts: { type: [Number], default: [100, 500, 5000, 25000] }  // Initial upgrade costs
 });
 
 UserSchema.methods.calculatePassiveIncome = function () {

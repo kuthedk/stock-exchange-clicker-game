@@ -1,20 +1,29 @@
+require('dotenv').config();  // Load environment variables from .env file
+console.log('SECRET_KEY:', process.env.SECRET_KEY);
+console.log('MONGO_URI:', process.env.MONGO_URI);
+console.log('PORT:', process.env.PORT);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('./models/User');
-const auth = require('./middleware/auth');
+const cors = require('cors');
+const User = require('./models/User'); // Ensure the correct path
+const auth = require('./middleware/auth'); // Ensure the correct path
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const SECRET_KEY = 'your_secret_key';
+const PORT = process.env.PORT || 5001;
+const SECRET_KEY = process.env.SECRET_KEY;
 
-mongoose.connect('mongodb://localhost:27017/stock-exchange-clicker', {
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-});
+})
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.error('MongoDB connection error:', err));
 
+app.use(cors()); // Enable CORS
 app.use(bodyParser.json());
 
 app.post('/register', async (req, res) => {
@@ -80,7 +89,7 @@ app.get('/user', auth, async (req, res) => {
 });
 
 app.put('/user', auth, async (req, res) => {
-    const { currency, volumePerClick, volumePerSecond, revenuePerTrade, prestigeMultiplier, lastLoggedIn } = req.body;
+    const { currency, volumePerClick, volumePerSecond, revenuePerTrade, prestigeMultiplier, lastLoggedIn, upgradeCosts } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -94,10 +103,31 @@ app.put('/user', auth, async (req, res) => {
     user.revenuePerTrade = revenuePerTrade;
     user.prestigeMultiplier = prestigeMultiplier;
     user.lastLoggedIn = lastLoggedIn;
+    user.upgradeCosts = upgradeCosts;
 
     await user.save();
 
     res.json(user);
+});
+
+app.post('/reset', auth, async (req, res) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return res.status(400).json({ message: 'User does not exist' });
+    }
+
+    user.currency = 0;
+    user.volumePerClick = 1;
+    user.volumePerSecond = 0;
+    user.revenuePerTrade = 1;
+    user.prestigeMultiplier = 1;
+    user.lastLoggedIn = new Date();
+    user.upgradeCosts = [100, 500, 5000, 25000];
+
+    await user.save();
+
+    res.json({ user });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

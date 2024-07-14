@@ -1,5 +1,6 @@
 #Visual Studio Code/Mac Generated files
 .history
+.DS_Store
 
 #JS
 node_modules/
