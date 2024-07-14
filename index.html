@@ -21,6 +21,19 @@
     .label {
       margin: 10px;
     }
+
+    .notification {
+      background-color: #444;
+      color: #fff;
+      padding: 10px;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: none;
+      border-radius: 5px;
+    }
   </style>
 </head>
 
@@ -33,6 +46,8 @@
   <button class="button" id="tradeButton">Process Trade</button>
   <div id="upgrades"></div>
   <button class="button" id="prestigeButton">Prestige</button>
+
+  <div class="notification" id="notification"></div>
 
   <script src="game.js"></script>
 </body>

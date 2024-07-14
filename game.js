@@ -1,18 +1,24 @@
 class Upgrade {
-    constructor(name, effect, cost, applyUpgrade) {
+    constructor(name, effect, cost, applyUpgrade, costMultiplier = 1.15) {
         this.name = name;
         this.effect = effect;
         this.cost = cost;
         this.applyUpgrade = applyUpgrade;
+        this.costMultiplier = costMultiplier;
     }
 
     purchase(game) {
         if (game.currency >= this.cost) {
             game.currency -= this.cost;
             this.applyUpgrade(game);
+            this.increaseCost();
             return true;
         }
         return false;
+    }
+
+    increaseCost() {
+        this.cost *= this.costMultiplier;
     }
 }
 
@@ -29,7 +35,7 @@ class StockExchangeGame {
 
     createUpgrades() {
         return [
-            new Upgrade("Increase Click Volume", "Doubles volume per click", 100, game => game.volumePerClick *= 2),
+            new Upgrade("Increase Click Volume", "Increases volume per click", 100, game => game.volumePerClick += 1),
             new Upgrade("Basic Automation", "Adds 10 volume per second", 500, game => game.volumePerSecond += 10),
             new Upgrade("HFT Algorithms", "Doubles volume per second", 5000, game => game.volumePerSecond *= 2),
             new Upgrade("Automated Trade Matching Engine", "Increases revenue per trade by 50%", 25000, game => game.revenuePerTrade *= 1.5)
@@ -78,6 +84,7 @@ class GameController {
         this.tradeButton = document.getElementById('tradeButton');
         this.upgradeContainer = document.getElementById('upgrades');
         this.prestigeButton = document.getElementById('prestigeButton');
+        this.notificationElement = document.getElementById('notification');
 
         this.tradeButton.addEventListener('click', () => this.manualTrade());
         this.prestigeButton.addEventListener('click', () => this.prestige());
@@ -99,10 +106,10 @@ class GameController {
     }
 
     updateUI() {
-        this.currencyLabel.innerText = `Currency: ${this.game.currency.toFixed(0)}`;
-        this.volumePerClickLabel.innerText = `Volume per Click: ${this.game.volumePerClick.toFixed(0)}`;
-        this.volumePerSecondLabel.innerText = `Volume per Second: ${this.game.volumePerSecond.toFixed(0)}`;
-        this.prestigeMultiplierLabel.innerText = `Prestige Multiplier: ${this.game.prestigeMultiplier.toFixed(0)}`;
+        this.currencyLabel.innerText = `Currency: ${this.formatNumber(this.game.currency)}`;
+        this.volumePerClickLabel.innerText = `Volume per Click: ${this.formatNumber(this.game.volumePerClick)}`;
+        this.volumePerSecondLabel.innerText = `Volume per Second: ${this.formatNumber(this.game.volumePerSecond)}`;
+        this.prestigeMultiplierLabel.innerText = `Prestige Multiplier: ${this.formatNumber(this.game.prestigeMultiplier)}`;
 
         if (this.isRunning) {
             setTimeout(() => this.updateUI(), 100);  // Schedule next UI update
@@ -117,19 +124,20 @@ class GameController {
     buyUpgrade(index) {
         const success = this.game.buyUpgrade(index);
         if (success) {
-            alert('Upgrade purchased!');
+            this.showNotification('Upgrade purchased!');
         } else {
-            alert('Not enough funds to purchase upgrade.');
+            this.showNotification('Not enough funds to purchase upgrade.');
         }
+        this.renderUpgrades();  // Update the upgrade buttons with new costs
         this.updateUI();
     }
 
     prestige() {
         const success = this.game.prestige();
         if (success) {
-            alert('You have prestiged! Your progress is reset but you gain a permanent multiplier.');
+            this.showNotification('You have prestiged! Your progress is reset but you gain a permanent multiplier.');
         } else {
-            alert('You need more currency to prestige.');
+            this.showNotification('You need more currency to prestige.');
         }
         this.updateUI();
     }
@@ -139,10 +147,38 @@ class GameController {
         this.game.upgrades.forEach((upgrade, index) => {
             const button = document.createElement('button');
             button.className = 'button';
-            button.innerText = `${upgrade.name} (${upgrade.cost})`;
+            button.innerText = `${upgrade.name} (${this.formatNumber(upgrade.cost)})`;
             button.addEventListener('click', () => this.buyUpgrade(index));
             this.upgradeContainer.appendChild(button);
         });
+    }
+
+    showNotification(message) {
+        this.notificationElement.innerText = message;
+        this.notificationElement.style.display = 'block';
+        setTimeout(() => {
+            this.notificationElement.style.display = 'none';
+        }, 3000);
+    }
+
+    formatNumber(value) {
+        if (value < 1000) return value.toFixed(0);
+
+        const units = [
+            "thousand", "million", "billion", "trillion", "quadrillion", "quintillion", "sextillion", 
+            "septillion", "octillion", "nonillion", "decillion", "undecillion", "duodecillion", 
+            "tredecillion", "quattuordecillion", "quindecillion", "sexdecillion", "septendecillion", 
+            "octodecillion", "novemdecillion", "vigintillion", "unvigintillion", "duovigintillion"
+        ];
+        let unitIndex = -1;
+        let reducedValue = value;
+
+        while (reducedValue >= 1000) {
+            reducedValue /= 1000;
+            unitIndex++;
+        }
+
+        return reducedValue.toFixed(3) + ' ' + units[unitIndex];
     }
 }
 
