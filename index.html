@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Exchange Clicker Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+    }
+
+    .label {
+      margin: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Stock Exchange Clicker Game</h1>
+  <div class="label" id="currency">Currency: 0</div>
+  <div class="label" id="volumePerClick">Volume per Click: 1</div>
+  <div class="label" id="volumePerSecond">Volume per Second: 0</div>
+  <div class="label" id="prestigeMultiplier">Prestige Multiplier: 1</div>
+  <button class="button" id="tradeButton">Process Trade</button>
+  <div id="upgrades"></div>
+  <button class="button" id="prestigeButton">Prestige</button>
+
+  <script src="game.js"></script>
+</body>
+
+</html>
