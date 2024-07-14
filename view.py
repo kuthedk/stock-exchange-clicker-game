@@ -1,8 +1,5 @@
 import tkinter as tk
-import logging
 from tkinter import messagebox
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 class StockExchangeGUI:
@@ -55,7 +52,6 @@ class StockExchangeGUI:
         self.file_menu.add_command(label="Exit", command=root.quit)
 
         self.update_ui()
-        logging.debug("View initialized and UI updated")
 
     def update_ui(self):
         self.currency_label.config(

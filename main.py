@@ -11,5 +11,5 @@ if __name__ == "__main__":
     app = StockExchangeGUI(root, controller)
     controller.view = app
     logging.debug("View has been set in the controller")
-    controller.start_game_loop()  # Ensure this is called after setting the view
+    controller.start_game_loop()
     root.mainloop()
