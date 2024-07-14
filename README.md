@@ -1,38 +1,52 @@
 # Stock Exchange Clicker Game
 
-This is a personal repository for the **Stock Exchange Clicker Game**, an incremental clicker game where you manage a stock exchange, automate trades, and strategically upgrade to reach new heights.
+A web-based stock exchange clicker game where users can register, log in, and track their own progress. Users can earn passive income even while logged out, with their data securely stored on the backend.
 
 ## Features
-- **Manual Trading**: Start by manually processing trades to earn currency.
-- **Automation Upgrades**: Purchase upgrades to automate trade processing and increase your revenue per trade.
-- **Strategic Growth**: Carefully choose upgrades to maximize your earnings and navigate through exponential growth.
-- **Prestige System**: Prestige to reset your progress and gain permanent multipliers, encouraging repeated cycles of growth.
-- **S-Curve Progression**: Experience a gameplay curve that starts slow, grows exponentially, and then focuses on strategic upgrades and prestige.
 
-## Project Structure
-stock_exchange_clicker/  
-├── controller.py # Handles the interaction between the model and the view  
-├── main.py # Entry point of the application, sets up the GUI and initializes MVC components  
-├── model.py # Contains the game logic, including manual trading, automation, upgrades, and prestige  
-└── view.py # Manages the graphical user interface using tkinter
+- User registration and login with secure JWT authentication
+- Persistent game state using MongoDB
+- Passive income tracking while logged out (up to 1 hour)
+- Linear and exponential upgrades to enhance gameplay
+- Prestige system for long-term progression
+- Responsive frontend using HTML, CSS, and JavaScript
 
-perl
-Copy code
+## Tech Stack
 
-## Getting Started
+- Backend: Node.js, Express.js
+- Database: MongoDB
+- Authentication: JWT
+- Frontend: HTML, CSS, JavaScript
+
+## Installation
+
+### Backend
+
 1. Clone the repository:
-    ```
-    git clone https://github.com/yourusername/stock-exchange-clicker-game.git
-    ```
-2. Navigate to the project directory:
-    ```
-    cd stock-exchange-clicker-game
-    ```
-3. Run the game:
-    ```
-    python main.py
+
+    ```bash
+    git clone <repository-url>
+    cd stock-exchange-clicker-backend
     ```
 
-## Requirements
-- Python 3.x
-- `tkinter` (included with Python standard library)
+2. Install dependencies:
+
+    ```bash
+    npm install
+    ```
+
+3. Set up MongoDB:
+
+    Ensure MongoDB is installed and running on your machine, or set up a MongoDB Atlas account.
+
+4. Start the server:
+
+    ```bash
+    node index.js
+    ```
+
+### Frontend
+
+1. Serve the frontend files:
+
+    Simply open `index.html` in a web browser, or use a static hosting service like GitHub Pages, Netlify, or Vercel.

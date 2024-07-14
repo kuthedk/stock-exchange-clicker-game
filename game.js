@@ -1,3 +1,76 @@
+let token = null;
+let user = null;
+
+document.getElementById('registerButton').addEventListener('click', async () => {
+    const username = document.getElementById('registerUsername').value;
+    const password = document.getElementById('registerPassword').value;
+
+    const response = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        token = data.token;
+        user = data.user;
+        showGame();
+    } else {
+        showNotification(data.message);
+    }
+});
+
+document.getElementById('loginButton').addEventListener('click', async () => {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    const response = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        token = data.token;
+        user = data.user;
+        showGame();
+        loadUserData();
+    } else {
+        showNotification(data.message);
+    }
+});
+
+document.getElementById('logoutButton').addEventListener('click', () => {
+    token = null;
+    user = null;
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('loginForm').style.display = 'block';
+});
+
+const showGame = () => {
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+};
+
+const loadUserData = async () => {
+    const response = await fetch('/user', {
+        method: 'GET',
+        headers: { 'x-auth-token': token },
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        user = data;
+        updateUI();
+    } else {
+        showNotification(data.message);
+    }
+};
+
 class Upgrade {
     constructor(name, effect, cost, applyUpgrade, costMultiplier = 1.15) {
         this.name = name;
@@ -23,13 +96,12 @@ class Upgrade {
 }
 
 class StockExchangeGame {
-    constructor() {
-        this.currency = 0;
-        this.volumePerClick = 1;
-        this.volumePerSecond = 0;
-        this.revenuePerTrade = 1;
-        this.prestigeMultiplier = 1;
-        this.prestigeThreshold = 1000000;
+    constructor(user) {
+        this.currency = user.currency;
+        this.volumePerClick = user.volumePerClick;
+        this.volumePerSecond = user.volumePerSecond;
+        this.revenuePerTrade = user.revenuePerTrade;
+        this.prestigeMultiplier = user.prestigeMultiplier;
         this.upgrades = this.createUpgrades();
     }
 
@@ -60,7 +132,7 @@ class StockExchangeGame {
     }
 
     prestige() {
-        if (this.currency >= this.prestigeThreshold) {
+        if (this.currency >= 1000000) {
             this.currency = 0;
             this.volumePerClick = 1;
             this.volumePerSecond = 0;
@@ -72,116 +144,116 @@ class StockExchangeGame {
     }
 }
 
-class GameController {
-    constructor() {
-        this.game = new StockExchangeGame();
-        this.isRunning = true;
+let game = null;
 
-        this.currencyLabel = document.getElementById('currency');
-        this.volumePerClickLabel = document.getElementById('volumePerClick');
-        this.volumePerSecondLabel = document.getElementById('volumePerSecond');
-        this.prestigeMultiplierLabel = document.getElementById('prestigeMultiplier');
-        this.tradeButton = document.getElementById('tradeButton');
-        this.upgradeContainer = document.getElementById('upgrades');
-        this.prestigeButton = document.getElementById('prestigeButton');
-        this.notificationElement = document.getElementById('notification');
+const updateUI = () => {
+    document.getElementById('currency').innerText = `Currency: ${formatNumber(game.currency)}`;
+    document.getElementById('volumePerClick').innerText = `Volume per Click: ${formatNumber(game.volumePerClick)}`;
+    document.getElementById('volumePerSecond').innerText = `Volume per Second: ${formatNumber(game.volumePerSecond)}`;
+    document.getElementById('prestigeMultiplier').innerText = `Prestige Multiplier: ${formatNumber(game.prestigeMultiplier)}`;
 
-        this.tradeButton.addEventListener('click', () => this.manualTrade());
-        this.prestigeButton.addEventListener('click', () => this.prestige());
+    document.getElementById('upgrades').innerHTML = '';
+    game.upgrades.forEach((upgrade, index) => {
+        const button = document.createElement('button');
+        button.className = 'button';
+        button.innerText = `${upgrade.name} (${formatNumber(upgrade.cost)})`;
+        button.addEventListener('click', () => buyUpgrade(index));
+        document.getElementById('upgrades').appendChild(button);
+    });
+};
 
-        this.renderUpgrades();
-        this.startGameLoop();
+const saveUserData = async () => {
+    await fetch('/user', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+        },
+        body: JSON.stringify({
+            currency: game.currency,
+            volumePerClick: game.volumePerClick,
+            volumePerSecond: game.volumePerSecond,
+            revenuePerTrade: game.revenuePerTrade,
+            prestigeMultiplier: game.prestigeMultiplier,
+            lastLoggedIn: new Date()
+        })
+    });
+};
+
+const formatNumber = value => {
+    if (value < 1000) return value.toFixed(0);
+
+    const units = [
+        "thousand", "million", "billion", "trillion", "quadrillion", "quintillion", "sextillion",
+        "septillion", "octillion", "nonillion", "decillion", "undecillion", "duodecillion",
+        "tredecillion", "quattuordecillion", "quindecillion", "sexdecillion", "septendecillion",
+        "octodecillion", "novemdecillion", "vigintillion", "unvigintillion", "duovigintillion"
+    ];
+    let unitIndex = -1;
+    let reducedValue = value;
+
+    while (reducedValue >= 1000) {
+        reducedValue /= 1000;
+        unitIndex++;
     }
 
-    startGameLoop() {
-        this.processTrades();
-        this.updateUI();
+    return reducedValue.toFixed(3) + ' ' + units[unitIndex];
+};
+
+const showNotification = message => {
+    const notification = document.getElementById('notification');
+    notification.innerText = message;
+    notification.style.display = 'block';
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
+};
+
+document.getElementById('tradeButton').addEventListener('click', () => {
+    game.manualTrade();
+    updateUI();
+    saveUserData();
+});
+
+document.getElementById('prestigeButton').addEventListener('click', () => {
+    if (game.prestige()) {
+        showNotification('You have prestiged! Your progress is reset but you gain a permanent multiplier.');
+    } else {
+        showNotification('You need more currency to prestige.');
     }
+    updateUI();
+    saveUserData();
+});
 
-    processTrades() {
-        this.game.processTrades(0.1);  // Process trades for 0.1 second intervals
-        if (this.isRunning) {
-            setTimeout(() => this.processTrades(), 100);  // Schedule next trade processing
-        }
+const buyUpgrade = index => {
+    if (game.buyUpgrade(index)) {
+        showNotification('Upgrade purchased!');
+    } else {
+        showNotification('Not enough funds to purchase upgrade.');
     }
+    updateUI();
+    saveUserData();
+};
 
-    updateUI() {
-        this.currencyLabel.innerText = `Currency: ${this.formatNumber(this.game.currency)}`;
-        this.volumePerClickLabel.innerText = `Volume per Click: ${this.formatNumber(this.game.volumePerClick)}`;
-        this.volumePerSecondLabel.innerText = `Volume per Second: ${this.formatNumber(this.game.volumePerSecond)}`;
-        this.prestigeMultiplierLabel.innerText = `Prestige Multiplier: ${this.formatNumber(this.game.prestigeMultiplier)}`;
+const startGameLoop = () => {
+    const processTrades = () => {
+        game.processTrades(0.1);  // Process trades for 0.1 second intervals
+        setTimeout(processTrades, 100);  // Schedule next trade processing
+    };
 
-        if (this.isRunning) {
-            setTimeout(() => this.updateUI(), 100);  // Schedule next UI update
-        }
+    const updateUIInterval = () => {
+        updateUI();
+        setTimeout(updateUIInterval, 100);  // Schedule next UI update
+    };
+
+    processTrades();
+    updateUIInterval();
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (token) {
+        showGame();
+        await loadUserData();
+        startGameLoop();
     }
-
-    manualTrade() {
-        this.game.manualTrade();
-        this.updateUI();
-    }
-
-    buyUpgrade(index) {
-        const success = this.game.buyUpgrade(index);
-        if (success) {
-            this.showNotification('Upgrade purchased!');
-        } else {
-            this.showNotification('Not enough funds to purchase upgrade.');
-        }
-        this.renderUpgrades();  // Update the upgrade buttons with new costs
-        this.updateUI();
-    }
-
-    prestige() {
-        const success = this.game.prestige();
-        if (success) {
-            this.showNotification('You have prestiged! Your progress is reset but you gain a permanent multiplier.');
-        } else {
-            this.showNotification('You need more currency to prestige.');
-        }
-        this.updateUI();
-    }
-
-    renderUpgrades() {
-        this.upgradeContainer.innerHTML = '';
-        this.game.upgrades.forEach((upgrade, index) => {
-            const button = document.createElement('button');
-            button.className = 'button';
-            button.innerText = `${upgrade.name} (${this.formatNumber(upgrade.cost)})`;
-            button.addEventListener('click', () => this.buyUpgrade(index));
-            this.upgradeContainer.appendChild(button);
-        });
-    }
-
-    showNotification(message) {
-        this.notificationElement.innerText = message;
-        this.notificationElement.style.display = 'block';
-        setTimeout(() => {
-            this.notificationElement.style.display = 'none';
-        }, 3000);
-    }
-
-    formatNumber(value) {
-        if (value < 1000) return value.toFixed(0);
-
-        const units = [
-            "thousand", "million", "billion", "trillion", "quadrillion", "quintillion", "sextillion", 
-            "septillion", "octillion", "nonillion", "decillion", "undecillion", "duodecillion", 
-            "tredecillion", "quattuordecillion", "quindecillion", "sexdecillion", "septendecillion", 
-            "octodecillion", "novemdecillion", "vigintillion", "unvigintillion", "duovigintillion"
-        ];
-        let unitIndex = -1;
-        let reducedValue = value;
-
-        while (reducedValue >= 1000) {
-            reducedValue /= 1000;
-            unitIndex++;
-        }
-
-        return reducedValue.toFixed(3) + ' ' + units[unitIndex];
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    new GameController();
 });
