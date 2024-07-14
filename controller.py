@@ -1,20 +1,33 @@
-import threading
-import time
+import logging
 from model import StockExchangeGame
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 class StockExchangeController:
     def __init__(self, view):
         self.view = view
         self.game = StockExchangeGame()
+        self.is_running = False
 
     def start_game_loop(self):
-        def game_loop():
-            while True:
-                self.game.process_trades(1)
-                time.sleep(1)
-        game_thread = threading.Thread(target=game_loop)
-        game_thread.daemon = True
-        game_thread.start()
+        logging.debug("Starting game loop")
+        self.is_running = True
+        self.schedule_next_game_loop()
+
+    def stop_game_loop(self):
+        self.is_running = False
+
+    def schedule_next_game_loop(self):
+        if self.is_running:
+            self.view.root.after(
+                100, self.game_loop
+            )  # Schedule next call in 100 milliseconds
+
+    def game_loop(self):
+        self.game.process_trades(0.1)  # Process trades for 0.1 second intervals
+        self.view.update_ui()
+        self.schedule_next_game_loop()
 
     def buy_upgrade(self, upgrade_index):
         success = self.game.buy_upgrade(upgrade_index)

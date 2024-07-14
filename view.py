@@ -1,5 +1,8 @@
 import tkinter as tk
+import logging
 from tkinter import messagebox
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class StockExchangeGUI:
@@ -52,7 +55,7 @@ class StockExchangeGUI:
         self.file_menu.add_command(label="Exit", command=root.quit)
 
         self.update_ui()
-        self.controller.start_game_loop()
+        logging.debug("View initialized and UI updated")
 
     def update_ui(self):
         self.currency_label.config(
@@ -72,7 +75,6 @@ class StockExchangeGUI:
             button.config(
                 text=f"{upgrade.name} ({self.controller.format_currency(upgrade.cost)})"
             )
-        self.root.after(1000, self.update_ui)
 
     def show_upgrade_message(self, success):
         if success:
