@@ -1,6 +1,9 @@
 #Visual Studio Code/Mac Generated files
 .history
 
+#JS
+node_modules/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
