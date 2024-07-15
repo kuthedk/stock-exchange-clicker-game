@@ -5,79 +5,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stock Exchange Clicker Game</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-    }
-
-    .label {
-      margin: 10px;
-    }
-
-    .notification {
-      background-color: #444;
-      color: #fff;
-      padding: 10px;
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      display: none;
-      border-radius: 5px;
-    }
-
-    .form {
-      margin-bottom: 20px;
-    }
-
-    .form input {
-      padding: 10px;
-      margin: 5px;
-    }
-  </style>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
 </head>
 
 <body>
-  <h1>Stock Exchange Clicker Game</h1>
-
-  <div class="form" id="registerForm">
-    <h2>Register</h2>
-    <input type="text" id="registerUsername" placeholder="Username">
-    <input type="password" id="registerPassword" placeholder="Password">
-    <button class="button" id="registerButton">Register</button>
+  <div class="container text-center mt-5">
+    <h1 class="mb-4">Stock Exchange Clicker Game</h1>
+    <div class="form" id="registerForm">
+      <h2>Register</h2>
+      <input type="text" id="registerUsername" class="form-control mb-2" placeholder="Username">
+      <input type="password" id="registerPassword" class="form-control mb-2" placeholder="Password">
+      <button class="btn btn-primary btn-block" id="registerButton">Register</button>
+    </div>
+    <div class="form" id="loginForm">
+      <h2>Login</h2>
+      <input type="text" id="loginUsername" class="form-control mb-2" placeholder="Username">
+      <input type="password" id="loginPassword" class="form-control mb-2" placeholder="Password">
+      <button class="btn btn-success btn-block" id="loginButton">Login</button>
+    </div>
+    <div id="game" style="display: none;">
+      <div class="label" id="currency">Currency: 0</div>
+      <div class="label" id="volumePerClick">Volume per Click: 1</div>
+      <div class="label" id="volumePerSecond">Volume per Second: 0</div>
+      <div class="label" id="prestigeMultiplier">Prestige Multiplier: 1</div>
+      <button class="btn btn-info btn-block" id="tradeButton"><i class="fas fa-chart-line"></i> Process Trade</button>
+      <div id="upgrades" class="my-3"></div>
+      <button class="btn btn-warning btn-block" id="prestigeButton"><i class="fas fa-crown"></i> Prestige</button>
+      <button class="btn btn-danger btn-block" id="resetButton"><i class="fas fa-sync-alt"></i> Reset Account</button>
+      <button class="btn btn-secondary btn-block" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+    <div class="notification" id="notification"></div>
   </div>
-
-  <div class="form" id="loginForm">
-    <h2>Login</h2>
-    <input type="text" id="loginUsername" placeholder="Username">
-    <input type="password" id="loginPassword" placeholder="Password">
-    <button class="button" id="loginButton">Login</button>
-  </div>
-
-  <div id="game" style="display: none;">
-    <div class="label" id="currency">Currency: 0</div>
-    <div class="label" id="volumePerClick">Volume per Click: 1</div>
-    <div class="label" id="volumePerSecond">Volume per Second: 0</div>
-    <div class="label" id="prestigeMultiplier">Prestige Multiplier: 1</div>
-    <button class="button" id="tradeButton">Process Trade</button>
-    <div id="upgrades"></div>
-    <button class="button" id="prestigeButton">Prestige</button>
-    <button class="button" id="resetButton">Reset Account</button>
-    <button class="button" id="logoutButton">Logout</button>
-  </div>
-
-  <div class="notification" id="notification"></div>
-
-  <script src="game.js"></script>
+  <script type="module" src="js/game.js"></script>
 </body>
 
 </html>

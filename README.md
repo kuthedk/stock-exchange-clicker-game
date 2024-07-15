@@ -44,8 +44,16 @@ stock-exchange-clicker-game/
 │   ├── package.json
 ├── frontend/
 │   ├── index.html
-│   ├── game.js
+│   ├── js/
+│   │   ├── game.js
+│   │   ├── upgrade.js
+│   │   ├── stockExchangeGame.js
+│   │   ├── ui.js
+│   │   ├── api.js
+│   │   └── utils.js
+│   ├── style.css
 └── README.md
+
 ```
 
 ## Getting Started
