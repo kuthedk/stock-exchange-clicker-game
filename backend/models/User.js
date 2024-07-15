@@ -1,24 +1,50 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    currency: { type: Number, default: 0 },
-    volumePerClick: { type: Number, default: 1 },
-    volumePerSecond: { type: Number, default: 0 },
-    revenuePerTrade: { type: Number, default: 1 },
-    prestigeMultiplier: { type: Number, default: 1 },
-    lastLoggedIn: { type: Date, default: Date.now },
-    upgradeCosts: { type: [Number], default: [100, 500, 5000, 25000] }  // Initial upgrade costs
+const UserSchema = new Schema({
+    username: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    password: {
+        type: String,
+        required: true,
+    },
+    currency: {
+        type: Number,
+        default: 0,
+    },
+    volumePerClick: {
+        type: Number,
+        default: 1,
+    },
+    volumePerSecond: {
+        type: Number,
+        default: 0,
+    },
+    revenuePerTrade: {
+        type: Number,
+        default: 1,
+    },
+    prestigeMultiplier: {
+        type: Number,
+        default: 1,
+    },
+    upgradeCosts: {
+        type: [Number],
+        default: [100, 500, 5000, 25000],
+    },
+    lastLoggedIn: {
+        type: Date,
+        default: Date.now,
+    },
 });
 
 UserSchema.methods.calculatePassiveIncome = function () {
-    const now = Date.now();
-    const timeElapsed = (now - new Date(this.lastLoggedIn).getTime()) / 1000; // in seconds
-    const maxPassiveIncomeTime = 3600; // 1 hour
-    const effectiveTime = Math.min(timeElapsed, maxPassiveIncomeTime);
-
-    const passiveIncome = this.volumePerSecond * effectiveTime * this.revenuePerTrade * this.prestigeMultiplier;
+    const now = new Date();
+    const secondsElapsed = (now - this.lastLoggedIn) / 1000;
+    const passiveIncome = this.volumePerSecond * secondsElapsed * this.revenuePerTrade * this.prestigeMultiplier;
     this.currency += passiveIncome;
     this.lastLoggedIn = now;
 };

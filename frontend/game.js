@@ -10,6 +10,7 @@ class Upgrade {
     purchase(game) {
         if (game.currency >= this.cost) {
             game.currency -= this.cost;
+            game.currency = roundNumber(game.currency); // Ensure currency is a whole integer
             this.applyUpgrade(game);
             this.increaseCost();
             return true;
@@ -19,12 +20,13 @@ class Upgrade {
 
     increaseCost() {
         this.cost *= this.costMultiplier;
+        this.cost = roundNumber(this.cost); // Ensure cost is a whole integer
     }
 }
 
 class StockExchangeGame {
     constructor(user) {
-        this.currency = user.currency;
+        this.currency = roundNumber(user.currency); // Ensure currency is a whole integer
         this.volumePerClick = user.volumePerClick;
         this.volumePerSecond = user.volumePerSecond;
         this.revenuePerTrade = user.revenuePerTrade;
@@ -45,12 +47,14 @@ class StockExchangeGame {
         const trades = this.volumePerSecond * seconds * this.prestigeMultiplier;
         const revenue = trades * this.revenuePerTrade;
         this.currency += revenue;
+        this.currency = roundNumber(this.currency); // Ensure currency is a whole integer
     }
 
     manualTrade() {
         const trades = this.volumePerClick * this.prestigeMultiplier;
         const revenue = trades * this.revenuePerTrade;
         this.currency += revenue;
+        this.currency = roundNumber(this.currency); // Ensure currency is a whole integer
     }
 
     buyUpgrade(index) {
@@ -74,35 +78,57 @@ class StockExchangeGame {
 let token = null;
 let user = null;
 let game = null;
+let saveQueue = [];
 
 const showGame = () => {
     document.getElementById('registerForm').style.display = 'none';
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('game').style.display = 'block';
+    console.log('Game shown.');
 };
 
 const loadUserData = async () => {
-    const response = await fetch('http://localhost:5001/user', {
+    console.log('Loading user data...');
+    console.log('Using token:', token);
+    const response = await fetch('http://localhost:5001/api/user', {
+        method: 'GET',
+        headers: { 'x-auth-token': token },
+    });
+
+    console.log('Response status:', response.status);
+    const data = await response.json();
+    console.log('Response data:', data);
+
+    if (response.ok) {
+        user = data;
+        game = new StockExchangeGame(user);
+        console.log('User data loaded:', user);
+        startGameLoop();
+        updateUI();
+    } else {
+        console.error('Failed to load user data:', data.message);
+        showNotification(data.message);
+    }
+};
+
+const checkSaveStatus = async () => {
+    console.log('Checking save status...');
+    const response = await fetch('http://localhost:5001/api/save-status', {
         method: 'GET',
         headers: { 'x-auth-token': token },
     });
 
     const data = await response.json();
-    if (response.ok) {
-        user = data;
-        game = new StockExchangeGame(user);
-        startGameLoop();
-        updateUI();
-    } else {
-        showNotification(data.message);
-    }
+    console.log('Pending saves:', data.pendingSaves);
+    return data.pendingSaves;
 };
 
 document.getElementById('registerButton').addEventListener('click', async () => {
     const username = document.getElementById('registerUsername').value;
     const password = document.getElementById('registerPassword').value;
 
-    const response = await fetch('http://localhost:5001/register', {
+    console.log('Registering user...');
+    const response = await fetch('http://localhost:5001/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -112,6 +138,7 @@ document.getElementById('registerButton').addEventListener('click', async () => 
     if (response.ok) {
         token = data.token;
         user = data.user;
+        console.log('User registered:', user);
         showGame();
     } else {
         showNotification(data.message);
@@ -122,7 +149,8 @@ document.getElementById('loginButton').addEventListener('click', async () => {
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
 
-    const response = await fetch('http://localhost:5001/login', {
+    console.log('Logging in user...');
+    const response = await fetch('http://localhost:5001/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -132,6 +160,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
     if (response.ok) {
         token = data.token;
         user = data.user;
+        console.log('User logged in:', user);
         showGame();
         loadUserData();
     } else {
@@ -139,16 +168,23 @@ document.getElementById('loginButton').addEventListener('click', async () => {
     }
 });
 
-document.getElementById('logoutButton').addEventListener('click', () => {
+document.getElementById('logoutButton').addEventListener('click', async () => {
+    console.log('Logging out user...');
+    // Attempt to process the save queue immediately
+    await processSaveQueue();
+
     token = null;
     user = null;
+    game = null;
     document.getElementById('game').style.display = 'none';
     document.getElementById('registerForm').style.display = 'block';
     document.getElementById('loginForm').style.display = 'block';
+    console.log('User logged out.');
 });
 
 document.getElementById('resetButton').addEventListener('click', async () => {
-    const response = await fetch('http://localhost:5001/reset', {
+    console.log('Resetting user account...');
+    const response = await fetch('http://localhost:5001/api/reset', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -160,49 +196,50 @@ document.getElementById('resetButton').addEventListener('click', async () => {
     if (response.ok) {
         user = data.user;
         game = new StockExchangeGame(user);
-        updateUI();
+        console.log('User account reset:', user);
+        await updateUI();
         showNotification('Account has been reset.');
     } else {
         showNotification(data.message);
     }
 });
 
-const updateUI = () => {
-    document.getElementById('currency').innerText = `Currency: ${formatNumber(game.currency)}`;
-    document.getElementById('volumePerClick').innerText = `Volume per Click: ${formatNumber(game.volumePerClick)}`;
-    document.getElementById('volumePerSecond').innerText = `Volume per Second: ${formatNumber(game.volumePerSecond)}`;
-    document.getElementById('prestigeMultiplier').innerText = `Prestige Multiplier: ${formatNumber(game.prestigeMultiplier)}`;
+const updateUI = async () => {
+    if (game) {
+        document.getElementById('currency').innerText = `Currency: ${formatNumber(game.currency)}`;
+        document.getElementById('volumePerClick').innerText = `Volume per Click: ${formatNumber(game.volumePerClick)}`;
+        document.getElementById('volumePerSecond').innerText = `Volume per Second: ${formatNumber(game.volumePerSecond)}`;
+        document.getElementById('prestigeMultiplier').innerText = `Prestige Multiplier: ${formatNumber(game.prestigeMultiplier)}`;
 
-    document.getElementById('upgrades').innerHTML = '';
-    game.upgrades.forEach((upgrade, index) => {
-        const button = document.createElement('button');
-        button.className = 'button';
-        button.innerText = `${upgrade.name} (${formatNumber(upgrade.cost)})`;
-        button.addEventListener('click', () => buyUpgrade(index));
-        document.getElementById('upgrades').appendChild(button);
-    });
+        document.getElementById('upgrades').innerHTML = '';
+        game.upgrades.forEach((upgrade, index) => {
+            const button = document.createElement('button');
+            button.className = 'button';
+            button.innerText = `${upgrade.name} (${formatNumber(upgrade.cost)})`;
+            button.addEventListener('click', () => buyUpgrade(index));
+            document.getElementById('upgrades').appendChild(button);
+        });
+        // console.log('UI updated.');
+    } else {
+        console.error('Game object is not initialized');
+    }
 };
 
-const buyUpgrade = index => {
-    if (game.buyUpgrade(index)) {
+const buyUpgrade = async index => {
+    if (game && game.buyUpgrade(index)) {
         showNotification('Upgrade purchased!');
     } else {
         showNotification('Not enough funds to purchase upgrade.');
     }
-    updateUI();
+    await updateUI();
     saveUserData();
 };
 
 const saveUserData = debounce(async () => {
-    const upgradeCosts = game.upgrades.map(upgrade => upgrade.cost);
+    if (game) {
+        const upgradeCosts = game.upgrades.map(upgrade => upgrade.cost);
 
-    await fetch('http://localhost:5001/user', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': token
-        },
-        body: JSON.stringify({
+        const userData = {
             currency: game.currency,
             volumePerClick: game.volumePerClick,
             volumePerSecond: game.volumePerSecond,
@@ -210,9 +247,52 @@ const saveUserData = debounce(async () => {
             prestigeMultiplier: game.prestigeMultiplier,
             lastLoggedIn: new Date(),
             upgradeCosts: upgradeCosts
-        })
-    });
+        };
+
+        try {
+            console.log('Saving user data...', userData);
+            await fetch('http://localhost:5001/api/user', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                },
+                body: JSON.stringify(userData)
+            });
+            console.log('User data saved.');
+        } catch (error) {
+            console.error('Failed to save user data, adding to queue:', error);
+            saveQueue.push(userData);
+            console.log('Save queue:', saveQueue);
+        }
+    } else {
+        console.error('Game object is not initialized');
+    }
 }, 1000);  // Save at most once per second
+
+const processSaveQueue = async () => {
+    console.log('Processing save queue...');
+    while (saveQueue.length > 0) {
+        const userData = saveQueue.shift();  // Get the first item from the queue
+
+        try {
+            await fetch('http://localhost:5001/api/user', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                },
+                body: JSON.stringify(userData)
+            });
+            console.log('Successfully saved queued user data.');
+        } catch (error) {
+            console.error('Failed to save queued user data, re-adding to queue:', error);
+            saveQueue.push(userData);  // Re-add to queue if save fails
+            break;  // Exit the loop if save fails
+        }
+    }
+    console.log('Save queue processed.');
+};
 
 function debounce(func, wait) {
     let timeout;
@@ -226,14 +306,23 @@ function debounce(func, wait) {
     };
 }
 
+const roundNumber = value => {
+    return Math.floor(value); // Ensure rounding down to nearest whole number
+};
+
 const startGameLoop = () => {
-    const processTrades = () => {
-        game.processTrades(0.1);  // Process trades for 0.1 second intervals
-        setTimeout(processTrades, 100);  // Schedule next trade processing
+    const processTrades = async () => {
+        if (game) {
+            game.processTrades(0.1);  // Process trades for 0.1 second intervals
+            await updateUI();
+            setTimeout(processTrades, 100);  // Schedule next trade processing
+        } else {
+            console.error('Game object is not initialized');
+        }
     };
 
-    const updateUIInterval = () => {
-        updateUI();
+    const updateUIInterval = async () => {
+        await updateUI();
         setTimeout(updateUIInterval, 100);  // Schedule next UI update
     };
 
@@ -249,20 +338,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-document.getElementById('tradeButton').addEventListener('click', () => {
-    game.manualTrade();
-    updateUI();
-    saveUserData();
+document.getElementById('tradeButton').addEventListener('click', async () => {
+    if (game) {
+        game.manualTrade();
+        await updateUI();
+        saveUserData();
+    } else {
+        console.error('Game object is not initialized');
+    }
 });
 
-document.getElementById('prestigeButton').addEventListener('click', () => {
-    if (game.prestige()) {
-        showNotification('You have prestiged! Your progress is reset but you gain a permanent multiplier.');
+document.getElementById('prestigeButton').addEventListener('click', async () => {
+    if (game) {
+        if (game.prestige()) {
+            showNotification('You have prestiged! Your progress is reset but you gain a permanent multiplier.');
+        } else {
+            showNotification('You need more currency to prestige.');
+        }
+        await updateUI();
+        saveUserData();
     } else {
-        showNotification('You need more currency to prestige.');
+        console.error('Game object is not initialized');
     }
-    updateUI();
-    saveUserData();
 });
 
 const formatNumber = value => {
