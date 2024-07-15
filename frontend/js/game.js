@@ -123,9 +123,9 @@ const processSaveQueue = async () => {
 
 const startGameLoop = () => {
     const processTrades = async () => {
-        game.processTrades(0.1);
+        game.processTrades();
         await updateUI(game);
-        setTimeout(processTrades, 100);
+        setTimeout(processTrades, 1000);  // Process trades every second
     };
     processTrades();
 };

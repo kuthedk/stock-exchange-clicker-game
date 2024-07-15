@@ -14,17 +14,18 @@ export class StockExchangeGame {
     createUpgrades(upgradeCosts) {
         return [
             new Upgrade("Increase Click Volume", "Increases volume per click", upgradeCosts[0], game => game.volumePerClick += 1),
-            new Upgrade("Basic Automation", "Adds 10 volume per second", upgradeCosts[1], game => game.volumePerSecond += 10),
+            new Upgrade("Basic Automation", "Adds 1 volume per second", upgradeCosts[1], game => game.volumePerSecond += 1),
             new Upgrade("HFT Algorithms", "Doubles volume per second", upgradeCosts[2], game => game.volumePerSecond *= 2),
             new Upgrade("Automated Trade Matching Engine", "Increases revenue per trade by 50%", upgradeCosts[3], game => game.revenuePerTrade *= 1.5)
         ];
     }
 
-    processTrades(seconds) {
-        const trades = this.volumePerSecond * seconds * this.prestigeMultiplier;
+    processTrades() {
+        const trades = this.volumePerSecond * this.prestigeMultiplier;
         const revenue = trades * this.revenuePerTrade;
         this.currency += revenue;
         this.currency = roundNumber(this.currency);
+        // console.log(`Processed trades: ${trades}, revenue: ${revenue}, total currency: ${this.currency}`);
     }
 
     manualTrade() {
@@ -32,6 +33,7 @@ export class StockExchangeGame {
         const revenue = trades * this.revenuePerTrade;
         this.currency += revenue;
         this.currency = roundNumber(this.currency);
+        // console.log(`Manual trade: ${trades}, revenue: ${revenue}, total currency: ${this.currency}`);
     }
 
     buyUpgrade(index) {
