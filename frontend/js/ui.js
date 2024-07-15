@@ -32,13 +32,27 @@ export const updateUI = async (game) => {
             document.getElementById('upgrades').innerHTML = '';
             game.upgrades.forEach((upgrade, index) => {
                 const button = document.createElement('button');
-                button.className = 'btn btn-info btn-block';
-                button.innerHTML = `${upgrade.name} <span class="badge badge-light">${formatNumber(upgrade.cost)}</span>`;
+                button.className = 'btn btn-block';
+                button.innerHTML = `${upgrade.name} (${upgrade.description}) <span class="badge badge-light">${formatNumber(upgrade.cost)}</span>`;
                 button.addEventListener('click', () => buyUpgrade(index));
                 document.getElementById('upgrades').appendChild(button);
             });
             previousState.upgradeCosts = game.upgrades.map(upgrade => upgrade.cost);
         }
+
+        // Update button states based on affordability
+        game.upgrades.forEach((upgrade, index) => {
+            const button = document.querySelector(`#upgrades button:nth-child(${index + 1})`);
+            if (game.currency >= upgrade.cost) {
+                button.disabled = false;
+                button.classList.add('btn-info');
+                button.classList.remove('btn-secondary');
+            } else {
+                button.disabled = true;
+                button.classList.add('btn-secondary');
+                button.classList.remove('btn-info');
+            }
+        });
     } else {
         console.error('Game object is not initialized');
     }

@@ -1,8 +1,8 @@
 // upgrade.js
 export class Upgrade {
-    constructor(name, effect, cost, applyUpgrade, costMultiplier = 1.15) {
+    constructor(name, description, cost, applyUpgrade, costMultiplier = 1.15) {
         this.name = name;
-        this.effect = effect;
+        this.description = description;
         this.cost = cost;
         this.applyUpgrade = applyUpgrade;
         this.costMultiplier = costMultiplier;

@@ -14,10 +14,10 @@ export const debounce = (func, wait) => {
 export const roundNumber = value => Math.floor(value);
 
 export const formatNumber = value => {
-    if (value < 1000) return value.toFixed(0);
+    if (value < 1000000) return value.toFixed(0);
 
     const units = [
-        "thousand", "million", "billion", "trillion", "quadrillion", "quintillion", "sextillion",
+        "million", "billion", "trillion", "quadrillion", "quintillion", "sextillion",
         "septillion", "octillion", "nonillion", "decillion", "undecillion", "duodecillion",
         "tredecillion", "quattuordecillion", "quindecillion", "sexdecillion", "septendecillion",
         "octodecillion", "novemdecillion", "vigintillion", "unvigintillion", "duovigintillion"
@@ -25,7 +25,7 @@ export const formatNumber = value => {
     let unitIndex = -1;
     let reducedValue = value;
 
-    while (reducedValue >= 1000) {
+    while (reducedValue >= 1000000) {
         reducedValue /= 1000;
         unitIndex++;
     }
