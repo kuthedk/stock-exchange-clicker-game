@@ -145,7 +145,7 @@ router.post('/buy-upgrade', auth, async (req, res) => {
                 return res.status(400).json({ message: 'Invalid upgrade index' });
         }
         user.upgradeCosts[upgradeIndex] *= 1.15;
-        user.upgradeCosts[upgradeIndex] = Math.floor(user.upgradeCosts[upgradeIndex]);
+        user.upgradeCosts[upgradeIndex] = Math.ceil(user.upgradeCosts[upgradeIndex]);
         await user.save();
         res.json(user);
     } else {

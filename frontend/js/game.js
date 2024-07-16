@@ -1,4 +1,3 @@
-// game.js
 import { StockExchangeGame } from './stockExchangeGame.js';
 import { updateUI, showGame } from './ui.js';
 import { registerUser, loginUser, loadUserData, saveUserData, resetUserData, buyUpgrade, processTrade, prestige } from './api.js';
@@ -11,7 +10,7 @@ let game = null;
 const loadGame = async () => {
     showGame();
     user = await loadUserData(token);
-    // console.log("Loaded user data: ", user);
+    //console.log("Loaded user data: ", user);
     game = new StockExchangeGame(user);
     startGameLoop();
     updateUI(game);
@@ -24,7 +23,7 @@ document.getElementById('registerButton').addEventListener('click', async () => 
     if (data.token) {
         token = data.token;
         user = data.user;
-        // console.log("User registered: ", user);
+        //console.log("User registered: ", user);
         loadGame();
     } else {
         showNotification(data.message);
@@ -38,7 +37,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
     if (data.token) {
         token = data.token;
         user = data.user;
-        // console.log("User logged in: ", user);
+        //console.log("User logged in: ", user);
         loadGame();
     } else {
         showNotification(data.message);
@@ -46,7 +45,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
 });
 
 document.getElementById('logoutButton').addEventListener('click', async () => {
-    // console.log("User logged out");
+    //console.log("User logged out");
     token = null;
     user = null;
     game = null;
@@ -59,7 +58,7 @@ document.getElementById('resetButton').addEventListener('click', async () => {
     const data = await resetUserData(token);
     if (data.user) {
         user = data.user;
-        // console.log("User reset: ", user);
+        //console.log("User reset: ", user);
         game = new StockExchangeGame(user);
         updateUI(game);
         showNotification('Account has been reset.');
@@ -79,14 +78,14 @@ document.getElementById('tradeButton').addEventListener('click', async () => {
         lastLoggedIn: new Date(),
         upgradeCosts: game.upgrades.map(upgrade => upgrade.cost)
     });
-    // console.log("Manual trade processed: ", user);
+    //console.log("Manual trade processed: ", user);
     updateUI(game);
 });
 
 document.getElementById('prestigeButton').addEventListener('click', async () => {
     user = await prestige(token);
     await saveUserData(token, user);
-    // console.log("Prestige: ", user);
+    //console.log("Prestige: ", user);
     game = new StockExchangeGame(user);
     updateUI(game);
 });
@@ -94,14 +93,14 @@ document.getElementById('prestigeButton').addEventListener('click', async () => 
 export const buyUpgradeHandler = async (index) => {
     user = await buyUpgrade(token, index);
     await saveUserData(token, user);
-    // console.log("Upgrade purchased: ", user);
+    //console.log("Upgrade purchased: ", user);
     game = new StockExchangeGame(user);
     updateUI(game);
 };
 
 const startGameLoop = () => {
     const processTrades = async () => {
-        // console.log("Processing trades...");
+        //console.log("Processing trades...");
         game.processTrades();
         await saveUserData(token, {
             currency: game.currency,
@@ -112,7 +111,7 @@ const startGameLoop = () => {
             lastLoggedIn: new Date(),
             upgradeCosts: game.upgrades.map(upgrade => upgrade.cost)
         });
-        // console.log("Processed trades: ", user);
+        //console.log("Processed trades: ", user);
         updateUI(game);
         setTimeout(processTrades, 1000);  // Process trades every second
     };

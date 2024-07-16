@@ -11,7 +11,7 @@ export class Upgrade {
     purchase(game) {
         if (game.currency >= this.cost) {
             game.currency -= this.cost;
-            game.currency = roundNumber(game.currency);
+            game.currency = game.currency;
             this.applyUpgrade(game);
             this.increaseCost();
             return true;
@@ -21,8 +21,6 @@ export class Upgrade {
 
     increaseCost() {
         this.cost *= this.costMultiplier;
-        this.cost = roundNumber(this.cost);
+        this.cost = this.cost;
     }
 }
-
-const roundNumber = value => Math.floor(value);
