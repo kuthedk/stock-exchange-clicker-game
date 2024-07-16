@@ -1,3 +1,4 @@
+// user.js
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
@@ -156,7 +157,8 @@ router.post('/buy-upgrade', auth, async (req, res) => {
 router.post('/process-trade', auth, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (user) {
-        const trades = user.volumePerClick * user.prestigeMultiplier;
+        // Process volume per second trades
+        const trades = user.volumePerSecond * user.prestigeMultiplier;
         const revenue = trades * user.revenuePerTrade;
         user.currency += revenue;
         user.currency = Math.floor(user.currency);
