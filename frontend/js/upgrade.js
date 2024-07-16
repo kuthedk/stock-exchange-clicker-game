@@ -11,7 +11,6 @@ export class Upgrade {
     purchase(game) {
         if (game.currency >= this.cost) {
             game.currency -= this.cost;
-            game.currency = game.currency;
             this.applyUpgrade(game);
             this.increaseCost();
             return true;
@@ -20,7 +19,6 @@ export class Upgrade {
     }
 
     increaseCost() {
-        this.cost *= this.costMultiplier;
-        this.cost = this.cost;
+        this.cost = Math.ceil(this.cost * this.costMultiplier);
     }
 }

@@ -10,7 +10,7 @@ export class StockExchangeGame {
         this.prestigeMultiplier = user.prestigeMultiplier;
         this.upgrades = this.createUpgrades(user.upgradeCosts);
         this.incomeInterval = 100; // Interval in milliseconds for income updates
-        this.incomePerInterval = this.volumePerSecond * this.revenuePerTrade * this.prestigeMultiplier / (1000 / this.incomeInterval);
+        this.updateIncomePerInterval();
     }
 
     createUpgrades(upgradeCosts) {
@@ -26,14 +26,14 @@ export class StockExchangeGame {
         this.incomePerInterval = this.volumePerSecond * this.revenuePerTrade * this.prestigeMultiplier / (1000 / this.incomeInterval);
     }
 
-    processTrades() {
-        this.currency += this.incomePerInterval;
+    update(deltaTime) {
+        const passiveIncome = (this.volumePerSecond * this.revenuePerTrade * this.prestigeMultiplier * deltaTime) / 1000;
+        this.currency += passiveIncome;
     }
 
     manualTrade() {
         const trades = this.volumePerClick * this.prestigeMultiplier;
-        const revenue = trades * this.revenuePerTrade;
-        this.currency += revenue;
+        this.currency += trades * this.revenuePerTrade;
     }
 
     buyUpgrade(index) {
@@ -56,5 +56,26 @@ export class StockExchangeGame {
             return true;
         }
         return false;
+    }
+
+    syncWithUser(user) {
+        this.currency = user.currency;
+        this.volumePerClick = user.volumePerClick;
+        this.volumePerSecond = user.volumePerSecond;
+        this.revenuePerTrade = user.revenuePerTrade;
+        this.prestigeMultiplier = user.prestigeMultiplier;
+        this.upgrades = this.createUpgrades(user.upgradeCosts);
+        this.updateIncomePerInterval();
+    }
+
+    toJSON() {
+        return {
+            currency: this.currency,
+            volumePerClick: this.volumePerClick,
+            volumePerSecond: this.volumePerSecond,
+            revenuePerTrade: this.revenuePerTrade,
+            prestigeMultiplier: this.prestigeMultiplier,
+            upgradeCosts: this.upgrades.map(upgrade => upgrade.cost)
+        };
     }
 }

@@ -11,33 +11,41 @@ export const debounce = (func, wait) => {
     };
 };
 
-export const roundNumber = value => Math.floor(value);
-
-export const formatNumber = value => {
-    if (value < 1000000) return new Intl.NumberFormat().format(value);
+export const formatNumber = (value) => {
+    if (value < 1000000) return new Intl.NumberFormat().format(Math.floor(value));
 
     const units = [
         "million", "billion", "trillion", "quadrillion", "quintillion", "sextillion",
         "septillion", "octillion", "nonillion", "decillion", "undecillion", "duodecillion",
         "tredecillion", "quattuordecillion", "quindecillion", "sexdecillion", "septendecillion",
-        "octodecillion", "novemdecillion", "vigintillion", "unvigintillion", "duovigintillion"
+        "octodecillion", "novemdecillion", "vigintillion"
     ];
-    let unitIndex = -1;
-    let reducedValue = value;
+    let unitIndex = 0;
+    let scaledValue = value;
 
-    while (reducedValue >= 1000000) {
-        reducedValue /= 1000;
+    while (scaledValue >= 1000000 && unitIndex < units.length - 1) {
         unitIndex++;
+        scaledValue /= 1000;
     }
 
-    return reducedValue.toFixed(3) + ' ' + units[unitIndex];
+    return scaledValue.toFixed(3) + ' ' + units[unitIndex];
 };
 
-export const showNotification = message => {
+export const showNotification = (message) => {
     const notification = document.getElementById('notification');
-    notification.innerText = message;
-    notification.style.display = 'block';
-    setTimeout(() => {
-        notification.style.display = 'none';
-    }, 3000);
+    if (notification) {
+        notification.innerText = message;
+        notification.style.display = 'block';
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    } else {
+        console.warn('Notification element not found');
+    }
+};
+
+export const logger = {
+    log: (message) => console.log(`[LOG] ${new Date().toISOString()}: ${message}`),
+    error: (message) => console.error(`[ERROR] ${new Date().toISOString()}: ${message}`),
+    warn: (message) => console.warn(`[WARN] ${new Date().toISOString()}: ${message}`),
 };
