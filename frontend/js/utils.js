@@ -14,7 +14,7 @@ export const debounce = (func, wait) => {
 export const roundNumber = value => Math.floor(value);
 
 export const formatNumber = value => {
-    if (value < 1000000) return value.toFixed(0);
+    if (value < 1000000) return new Intl.NumberFormat().format(value);
 
     const units = [
         "million", "billion", "trillion", "quadrillion", "quintillion", "sextillion",
