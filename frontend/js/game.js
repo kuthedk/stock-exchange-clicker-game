@@ -1,3 +1,4 @@
+// game.js
 import { StockExchangeGame } from './stockExchangeGame.js';
 import { updateUI, showGame } from './ui.js';
 import { registerUser, loginUser, loadUserData, saveUserData, resetUserData, buyUpgrade, processTrade, prestige } from './api.js';
@@ -5,15 +6,12 @@ import { debounce, showNotification } from './utils.js';
 
 let token = null;
 let user = null;
-let game = null;
 
 const loadGame = async () => {
     showGame();
     user = await loadUserData(token);
-    //console.log("Loaded user data: ", user);
-    game = new StockExchangeGame(user);
+    updateUI(user);
     startGameLoop();
-    updateUI(game);
 };
 
 document.getElementById('registerButton').addEventListener('click', async () => {
@@ -23,7 +21,6 @@ document.getElementById('registerButton').addEventListener('click', async () => 
     if (data.token) {
         token = data.token;
         user = data.user;
-        //console.log("User registered: ", user);
         loadGame();
     } else {
         showNotification(data.message);
@@ -37,18 +34,15 @@ document.getElementById('loginButton').addEventListener('click', async () => {
     if (data.token) {
         token = data.token;
         user = data.user;
-        //console.log("User logged in: ", user);
         loadGame();
     } else {
         showNotification(data.message);
     }
 });
 
-document.getElementById('logoutButton').addEventListener('click', async () => {
-    //console.log("User logged out");
+document.getElementById('logoutButton').addEventListener('click', () => {
     token = null;
     user = null;
-    game = null;
     document.getElementById('game').style.display = 'none';
     document.getElementById('registerForm').style.display = 'block';
     document.getElementById('loginForm').style.display = 'block';
@@ -58,9 +52,7 @@ document.getElementById('resetButton').addEventListener('click', async () => {
     const data = await resetUserData(token);
     if (data.user) {
         user = data.user;
-        //console.log("User reset: ", user);
-        game = new StockExchangeGame(user);
-        updateUI(game);
+        updateUI(user);
         showNotification('Account has been reset.');
     } else {
         showNotification(data.message);
@@ -68,52 +60,28 @@ document.getElementById('resetButton').addEventListener('click', async () => {
 });
 
 document.getElementById('tradeButton').addEventListener('click', async () => {
-    game.manualTrade();
-    await saveUserData(token, {
-        currency: game.currency,
-        volumePerClick: game.volumePerClick,
-        volumePerSecond: game.volumePerSecond,
-        revenuePerTrade: game.revenuePerTrade,
-        prestigeMultiplier: game.prestigeMultiplier,
-        lastLoggedIn: new Date(),
-        upgradeCosts: game.upgrades.map(upgrade => upgrade.cost)
-    });
-    //console.log("Manual trade processed: ", user);
-    updateUI(game);
+    user.currency += user.volumePerClick * user.prestigeMultiplier * user.revenuePerTrade;
+    await saveUserData(token, user);
+    updateUI(user);
 });
 
 document.getElementById('prestigeButton').addEventListener('click', async () => {
     user = await prestige(token);
     await saveUserData(token, user);
-    //console.log("Prestige: ", user);
-    game = new StockExchangeGame(user);
-    updateUI(game);
+    updateUI(user);
 });
 
 export const buyUpgradeHandler = async (index) => {
     user = await buyUpgrade(token, index);
     await saveUserData(token, user);
-    //console.log("Upgrade purchased: ", user);
-    game = new StockExchangeGame(user);
-    updateUI(game);
+    updateUI(user);
 };
 
 const startGameLoop = () => {
     const processTrades = async () => {
-        //console.log("Processing trades...");
-        game.processTrades();
-        await saveUserData(token, {
-            currency: game.currency,
-            volumePerClick: game.volumePerClick,
-            volumePerSecond: game.volumePerSecond,
-            revenuePerTrade: game.revenuePerTrade,
-            prestigeMultiplier: game.prestigeMultiplier,
-            lastLoggedIn: new Date(),
-            upgradeCosts: game.upgrades.map(upgrade => upgrade.cost)
-        });
-        //console.log("Processed trades: ", user);
-        updateUI(game);
-        setTimeout(processTrades, 1000);  // Process trades every second
+        user = await processTrade(token);
+        updateUI(user);
+        setTimeout(processTrades, 100); // Process trades every 100 milliseconds
     };
     processTrades();
 };

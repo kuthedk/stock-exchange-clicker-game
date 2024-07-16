@@ -1,4 +1,3 @@
-// user.js
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
@@ -67,7 +66,14 @@ router.get('/user', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (user) {
-            res.json(user);
+            // Ensure upgrades are populated correctly
+            const upgrades = [
+                { name: "Increase Click Volume", description: "Increases volume per click by 1", cost: user.upgradeCosts[0] },
+                { name: "Basic Automation", description: "Adds 1 volume per second", cost: user.upgradeCosts[1] },
+                { name: "HFT Algorithms", description: "Doubles volume per second", cost: user.upgradeCosts[2] },
+                { name: "Automated Trade Matching Engine", description: "Increases revenue per trade by 50%", cost: user.upgradeCosts[3] }
+            ];
+            res.json({ ...user.toObject(), upgrades });
         } else {
             res.status(404).json({ message: 'User not found' });
         }
@@ -146,6 +152,7 @@ router.post('/buy-upgrade', auth, async (req, res) => {
         }
         user.upgradeCosts[upgradeIndex] *= 1.15;
         user.upgradeCosts[upgradeIndex] = Math.ceil(user.upgradeCosts[upgradeIndex]);
+        user.lastUpdate = new Date(); // Reset the last update time after purchasing an upgrade
         await user.save();
         res.json(user);
     } else {
@@ -157,11 +164,7 @@ router.post('/buy-upgrade', auth, async (req, res) => {
 router.post('/process-trade', auth, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (user) {
-        // Process volume per second trades
-        const trades = user.volumePerSecond * user.prestigeMultiplier;
-        const revenue = trades * user.revenuePerTrade;
-        user.currency += revenue;
-        user.currency = Math.floor(user.currency);
+        user.calculatePassiveIncome();
         await user.save();
         res.json(user);
     } else {
@@ -178,6 +181,7 @@ router.post('/prestige', auth, async (req, res) => {
         user.volumePerSecond = 0;
         user.revenuePerTrade = 1;
         user.prestigeMultiplier *= 2;
+        user.lastUpdate = new Date(); // Reset the last update time after prestiging
         await user.save();
         res.json(user);
     } else {

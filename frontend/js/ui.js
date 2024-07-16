@@ -28,7 +28,7 @@ export const updateUI = async (game) => {
             document.getElementById('prestigeMultiplier').innerText = `Prestige Multiplier: ${formatNumber(game.prestigeMultiplier)}`;
             previousState.prestigeMultiplier = game.prestigeMultiplier;
         }
-        if (!arraysEqual(game.upgrades.map(upgrade => upgrade.cost), previousState.upgradeCosts)) {
+        if (Array.isArray(game.upgrades) && !arraysEqual(game.upgrades.map(upgrade => upgrade.cost), previousState.upgradeCosts)) {
             document.getElementById('upgrades').innerHTML = '';
             game.upgrades.forEach((upgrade, index) => {
                 const button = document.createElement('button');
@@ -41,18 +41,20 @@ export const updateUI = async (game) => {
         }
 
         // Update button states based on affordability
-        game.upgrades.forEach((upgrade, index) => {
-            const button = document.querySelector(`#upgrades button:nth-child(${index + 1})`);
-            if (game.currency >= upgrade.cost) {
-                button.disabled = false;
-                button.classList.add('btn-info');
-                button.classList.remove('btn-secondary');
-            } else {
-                button.disabled = true;
-                button.classList.add('btn-secondary');
-                button.classList.remove('btn-info');
-            }
-        });
+        if (Array.isArray(game.upgrades)) {
+            game.upgrades.forEach((upgrade, index) => {
+                const button = document.querySelector(`#upgrades button:nth-child(${index + 1})`);
+                if (game.currency >= upgrade.cost) {
+                    button.disabled = false;
+                    button.classList.add('btn-info');
+                    button.classList.remove('btn-secondary');
+                } else {
+                    button.disabled = true;
+                    button.classList.add('btn-secondary');
+                    button.classList.remove('btn-info');
+                }
+            });
+        }
     } else {
         console.error('Game object is not initialized');
     }

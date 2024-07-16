@@ -1,3 +1,4 @@
+// User.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -39,14 +40,19 @@ const UserSchema = new Schema({
         type: Date,
         default: Date.now,
     },
+    lastUpdate: { 
+        type: Date,
+        default: Date.now,
+    }
 });
 
 UserSchema.methods.calculatePassiveIncome = function () {
     const now = new Date();
-    const secondsElapsed = (now - this.lastLoggedIn) / 1000;
-    const passiveIncome = this.volumePerSecond * secondsElapsed * this.revenuePerTrade * this.prestigeMultiplier;
-    this.currency += passiveIncome;
-    this.lastLoggedIn = now;
+    const secondsElapsed = (now - this.lastUpdate) / 1000;
+    const incomePerSecond = this.volumePerSecond * this.revenuePerTrade * this.prestigeMultiplier;
+    const incrementalIncome = (incomePerSecond / 10) * secondsElapsed * 10;
+    this.currency += incrementalIncome;
+    this.lastUpdate = now;
 };
 
 module.exports = mongoose.model('User', UserSchema);
