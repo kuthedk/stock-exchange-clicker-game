@@ -46,3 +46,37 @@ export const resetUserData = async (token) => {
     });
     return response.json();
 };
+
+export const buyUpgrade = async (token, upgradeIndex) => {
+    const response = await fetch('http://localhost:5001/api/buy-upgrade', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+        },
+        body: JSON.stringify({ upgradeIndex })
+    });
+    return response.json();
+};
+
+export const processTrade = async (token) => {
+    const response = await fetch('http://localhost:5001/api/process-trade', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+        }
+    });
+    return response.json();
+};
+
+export const prestige = async (token) => {
+    const response = await fetch('http://localhost:5001/api/prestige', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+        }
+    });
+    return response.json();
+};

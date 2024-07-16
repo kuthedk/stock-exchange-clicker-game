@@ -121,4 +121,66 @@ router.post('/reset', auth, async (req, res) => {
     }
 });
 
+// Purchase upgrade
+router.post('/buy-upgrade', auth, async (req, res) => {
+    const { upgradeIndex } = req.body;
+    const user = await User.findById(req.user.id);
+    if (user && user.currency >= user.upgradeCosts[upgradeIndex]) {
+        user.currency -= user.upgradeCosts[upgradeIndex];
+        switch (upgradeIndex) {
+            case 0:
+                user.volumePerClick += 1;
+                break;
+            case 1:
+                user.volumePerSecond += 1;
+                break;
+            case 2:
+                user.volumePerSecond *= 2;
+                break;
+            case 3:
+                user.revenuePerTrade *= 1.5;
+                break;
+            default:
+                return res.status(400).json({ message: 'Invalid upgrade index' });
+        }
+        user.upgradeCosts[upgradeIndex] *= 1.15;
+        user.upgradeCosts[upgradeIndex] = Math.floor(user.upgradeCosts[upgradeIndex]);
+        await user.save();
+        res.json(user);
+    } else {
+        res.status(400).json({ message: 'Not enough currency or invalid upgrade index' });
+    }
+});
+
+// Process trade
+router.post('/process-trade', auth, async (req, res) => {
+    const user = await User.findById(req.user.id);
+    if (user) {
+        const trades = user.volumePerClick * user.prestigeMultiplier;
+        const revenue = trades * user.revenuePerTrade;
+        user.currency += revenue;
+        user.currency = Math.floor(user.currency);
+        await user.save();
+        res.json(user);
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+});
+
+// Prestige
+router.post('/prestige', auth, async (req, res) => {
+    const user = await User.findById(req.user.id);
+    if (user && user.currency >= 1000000) {
+        user.currency = 0;
+        user.volumePerClick = 1;
+        user.volumePerSecond = 0;
+        user.revenuePerTrade = 1;
+        user.prestigeMultiplier *= 2;
+        await user.save();
+        res.json(user);
+    } else {
+        res.status(400).json({ message: 'Not enough currency to prestige' });
+    }
+});
+
 module.exports = router;

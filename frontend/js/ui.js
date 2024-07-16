@@ -1,6 +1,6 @@
 // ui.js
 import { formatNumber, showNotification } from './utils.js';
-import { buyUpgrade } from './game.js';
+import { buyUpgradeHandler } from './game.js';
 
 let previousState = {
     currency: null,
@@ -34,7 +34,7 @@ export const updateUI = async (game) => {
                 const button = document.createElement('button');
                 button.className = 'btn btn-block';
                 button.innerHTML = `${upgrade.name} (${upgrade.description}) <span class="badge badge-light">${formatNumber(upgrade.cost)}</span>`;
-                button.addEventListener('click', () => buyUpgrade(index));
+                button.addEventListener('click', () => buyUpgradeHandler(index));
                 document.getElementById('upgrades').appendChild(button);
             });
             previousState.upgradeCosts = game.upgrades.map(upgrade => upgrade.cost);

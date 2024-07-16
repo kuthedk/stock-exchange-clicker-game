@@ -1,13 +1,12 @@
 // game.js
 import { StockExchangeGame } from './stockExchangeGame.js';
 import { updateUI, showGame } from './ui.js';
-import { registerUser, loginUser, loadUserData, saveUserData, resetUserData } from './api.js';
+import { registerUser, loginUser, loadUserData, saveUserData, resetUserData, buyUpgrade, processTrade, prestige } from './api.js';
 import { debounce, showNotification } from './utils.js';
 
 let token = null;
 let user = null;
 let game = null;
-let saveQueue = [];
 
 const loadGame = async () => {
     showGame();
@@ -15,16 +14,6 @@ const loadGame = async () => {
     game = new StockExchangeGame(user);
     startGameLoop();
     updateUI(game);
-};
-
-export const buyUpgrade = async (index) => {
-    if (game && game.buyUpgrade(index)) {
-        showNotification('Upgrade purchased!');
-    } else {
-        showNotification('Not enough funds to purchase upgrade.');
-    }
-    await updateUI(game);
-    saveUserDataDebounced();
 };
 
 document.getElementById('registerButton').addEventListener('click', async () => {
@@ -54,7 +43,6 @@ document.getElementById('loginButton').addEventListener('click', async () => {
 });
 
 document.getElementById('logoutButton').addEventListener('click', async () => {
-    await processSaveQueue();
     token = null;
     user = null;
     game = null;
@@ -76,55 +64,28 @@ document.getElementById('resetButton').addEventListener('click', async () => {
 });
 
 document.getElementById('tradeButton').addEventListener('click', async () => {
-    game.manualTrade();
+    user = await processTrade(token);
+    game = new StockExchangeGame(user);
     updateUI(game);
-    saveUserDataDebounced();
 });
 
 document.getElementById('prestigeButton').addEventListener('click', async () => {
-    if (game.prestige()) {
-        showNotification('You have prestiged! Your progress is reset but you gain a permanent multiplier.');
-    } else {
-        showNotification('You need more currency to prestige.');
-    }
+    user = await prestige(token);
+    game = new StockExchangeGame(user);
     updateUI(game);
-    saveUserDataDebounced();
 });
 
-const saveUserDataDebounced = debounce(async () => {
-    const upgradeCosts = game.upgrades.map(upgrade => upgrade.cost);
-    const userData = {
-        currency: game.currency,
-        volumePerClick: game.volumePerClick,
-        volumePerSecond: game.volumePerSecond,
-        revenuePerTrade: game.revenuePerTrade,
-        prestigeMultiplier: game.prestigeMultiplier,
-        lastLoggedIn: new Date(),
-        upgradeCosts: upgradeCosts
-    };
-    try {
-        await saveUserData(token, userData);
-    } catch (error) {
-        saveQueue.push(userData);
-    }
-}, 1000);
-
-const processSaveQueue = async () => {
-    while (saveQueue.length > 0) {
-        const userData = saveQueue.shift();
-        try {
-            await saveUserData(token, userData);
-        } catch (error) {
-            saveQueue.push(userData);
-            break;
-        }
-    }
+export const buyUpgradeHandler = async (index) => {
+    user = await buyUpgrade(token, index);
+    game = new StockExchangeGame(user);
+    updateUI(game);
 };
 
 const startGameLoop = () => {
     const processTrades = async () => {
-        game.processTrades();
-        await updateUI(game);
+        user = await processTrade(token);
+        game = new StockExchangeGame(user);
+        updateUI(game);
         setTimeout(processTrades, 1000);  // Process trades every second
     };
     processTrades();
