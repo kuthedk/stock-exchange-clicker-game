@@ -11,6 +11,7 @@ let game = null;
 const loadGame = async () => {
     showGame();
     user = await loadUserData(token);
+    // console.log("Loaded user data: ", user);
     game = new StockExchangeGame(user);
     startGameLoop();
     updateUI(game);
@@ -23,6 +24,7 @@ document.getElementById('registerButton').addEventListener('click', async () => 
     if (data.token) {
         token = data.token;
         user = data.user;
+        // console.log("User registered: ", user);
         loadGame();
     } else {
         showNotification(data.message);
@@ -36,6 +38,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
     if (data.token) {
         token = data.token;
         user = data.user;
+        // console.log("User logged in: ", user);
         loadGame();
     } else {
         showNotification(data.message);
@@ -43,6 +46,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
 });
 
 document.getElementById('logoutButton').addEventListener('click', async () => {
+    // console.log("User logged out");
     token = null;
     user = null;
     game = null;
@@ -55,6 +59,7 @@ document.getElementById('resetButton').addEventListener('click', async () => {
     const data = await resetUserData(token);
     if (data.user) {
         user = data.user;
+        // console.log("User reset: ", user);
         game = new StockExchangeGame(user);
         updateUI(game);
         showNotification('Account has been reset.');
@@ -64,27 +69,50 @@ document.getElementById('resetButton').addEventListener('click', async () => {
 });
 
 document.getElementById('tradeButton').addEventListener('click', async () => {
-    user = await processTrade(token);
-    game = new StockExchangeGame(user);
+    game.manualTrade();
+    await saveUserData(token, {
+        currency: game.currency,
+        volumePerClick: game.volumePerClick,
+        volumePerSecond: game.volumePerSecond,
+        revenuePerTrade: game.revenuePerTrade,
+        prestigeMultiplier: game.prestigeMultiplier,
+        lastLoggedIn: new Date(),
+        upgradeCosts: game.upgrades.map(upgrade => upgrade.cost)
+    });
+    // console.log("Manual trade processed: ", user);
     updateUI(game);
 });
 
 document.getElementById('prestigeButton').addEventListener('click', async () => {
     user = await prestige(token);
+    await saveUserData(token, user);
+    // console.log("Prestige: ", user);
     game = new StockExchangeGame(user);
     updateUI(game);
 });
 
 export const buyUpgradeHandler = async (index) => {
     user = await buyUpgrade(token, index);
+    await saveUserData(token, user);
+    // console.log("Upgrade purchased: ", user);
     game = new StockExchangeGame(user);
     updateUI(game);
 };
 
 const startGameLoop = () => {
     const processTrades = async () => {
-        user = await processTrade(token);
-        game = new StockExchangeGame(user);
+        // console.log("Processing trades...");
+        game.processTrades();
+        await saveUserData(token, {
+            currency: game.currency,
+            volumePerClick: game.volumePerClick,
+            volumePerSecond: game.volumePerSecond,
+            revenuePerTrade: game.revenuePerTrade,
+            prestigeMultiplier: game.prestigeMultiplier,
+            lastLoggedIn: new Date(),
+            upgradeCosts: game.upgrades.map(upgrade => upgrade.cost)
+        });
+        // console.log("Processed trades: ", user);
         updateUI(game);
         setTimeout(processTrades, 1000);  // Process trades every second
     };
